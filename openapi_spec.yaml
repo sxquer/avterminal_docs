@@ -1,0 +1,548 @@
+openapi: 3.0.0
+info:
+  title: API Интеграционного Сервиса AmoCRM
+  version: 1.0.0
+  description: |
+    API для интеграции AmoCRM с внешними системами: Альта, ВЭД-склад, 1С.
+    Сервис будет выступать в роли посредника, принимая и отправляя данные между AmoCRM и указанными системами.
+
+servers:
+  - url: http://localhost:8080/api/v1 # Пример URL сервера
+    description: Локальный сервер разработки
+
+components:
+  schemas:
+    # Общие схемы
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Операция выполнена успешно"
+
+    # Схемы для интеграции с Альта
+    PtdExportRequest:
+      type: object
+      description: Данные для формирования XML для ПТД из AmoCRM.
+      properties:
+        lead_id:
+          type: integer
+          description: ID сделки в AmoCRM
+        client_surname:
+          type: string
+        client_name:
+          type: string
+        client_middlename:
+          type: string
+          nullable: true
+        client_birth_date:
+          type: string
+          format: date
+        passport_series:
+          type: string
+        passport_number:
+          type: string
+        passport_issued_by:
+          type: string
+        passport_issue_date:
+          type: string
+          format: date
+        registration_address:
+          type: string
+        inn:
+          type: string
+          nullable: true
+        car_brand:
+          type: string
+        car_model:
+          type: string
+        vin:
+          type: string
+        body_number:
+          type: string
+        contract_number:
+          type: string
+        contract_date:
+          type: string
+          format: date
+      required:
+        - lead_id
+        - client_surname
+        - client_name
+        - client_birth_date
+        - passport_series
+        - passport_number
+        - passport_issued_by
+        - passport_issue_date
+        - registration_address
+        - car_brand
+        - car_model
+        - vin
+        - body_number
+        - contract_number
+        - contract_date
+
+    PtdStatusNotification:
+      type: object
+      description: Уведомление о статусе ПТД от Альта.
+      properties:
+        vin:
+          type: string
+        declaration_number:
+          type: string
+        status_datetime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: ["registered", "released", "rejected"] # зарегистрирована, выпущена, отказано
+      required:
+        - vin
+        - declaration_number
+        - status_datetime
+        - status
+
+    TransitDeclarationStatusNotification:
+      type: object
+      description: Уведомление о статусе транзитной ДТ от Альта.
+      properties:
+        vin:
+          type: string
+        declaration_number:
+          type: string
+        registration_datetime:
+          type: string
+          format: date-time
+        # status: # В ТЗ указано "на начальном этапе — «ТД зарегистрирована»"
+        #   type: string
+        #   enum: ["registered"]
+        persons:
+          type: array
+          items:
+            type: string # ФИО
+          description: Список ФИО, привязанных к ТД
+      required:
+        - vin
+        - declaration_number
+        - registration_datetime
+        - persons
+
+    # Схемы для интеграции с ВЭД-склад
+    SvhReleaseNotification:
+      type: object
+      description: Уведомление о принятии решения о выдаче товаров с СВХ от ВЭД-склада.
+      properties:
+        vin:
+          type: string
+        notification_datetime: # Дата Уведомления о принятии товара на СВХ
+          type: string
+          format: date-time
+      required:
+        - vin
+        - notification_datetime
+
+    LabDocumentsNotification:
+      type: object
+      description: Уведомление с документами из лаборатории.
+      properties:
+        vin:
+          type: string
+        epts_document_url: # Предполагается, что PHP скрипт загрузит файлы и передаст URL
+          type: string
+          format: url
+          description: URL к загруженному ЭПТС документу (PDF)
+        sbkts_document_url: # Аналогично
+          type: string
+          format: url
+          description: URL к загруженному СБКТС документу (PDF)
+      required:
+        - vin
+        - epts_document_url
+        - sbkts_document_url
+
+    # Схемы для интеграции с 1С
+    ClientDataFor1C:
+      type: object
+      description: Данные клиента из AmoCRM для создания контрагента в 1С.
+      properties:
+        lead_id:
+          type: integer
+        vin:
+          type: string
+        client_type: # Вид клиента
+          type: string
+          enum: ["individual", "legal_entity"] # физ.лицо, юр.лицо
+        full_name:
+          type: string
+        mobile_phone:
+          type: string
+          nullable: true
+        passport_series:
+          type: string
+          nullable: true
+        passport_number:
+          type: string
+          nullable: true
+        passport_issued_by:
+          type: string
+          nullable: true
+        passport_issue_date:
+          type: string
+          format: date
+          nullable: true
+        passport_department_code: # Код подразделения
+          type: string
+          nullable: true
+        registration_address:
+          type: string
+        inn:
+          type: string
+          nullable: true
+        snils:
+          type: string
+          nullable: true
+        contract_number: # Номер договора
+          type: string
+          nullable: true
+      required:
+        - lead_id
+        - vin
+        - client_type
+        - full_name
+        - registration_address
+
+    ServiceDataFor1CInvoice:
+      type: object
+      description: Данные по услугам из AmoCRM для формирования счета в 1С.
+      properties:
+        lead_id:
+          type: integer
+        vin:
+          type: string
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              cost:
+                type: number
+                format: float
+            required:
+              - name
+              - cost
+      required:
+        - lead_id
+        - vin
+        - services
+
+    InvoicePaymentNotification:
+      type: object
+      description: Уведомление об оплате счета из 1С.
+      properties:
+        vin:
+          type: string
+        invoice_number:
+          type: string
+        payment_datetime:
+          type: string
+          format: date-time
+        amount:
+          type: number
+          format: float
+      required:
+        - vin
+        - invoice_number
+        - payment_datetime
+        - amount
+
+  securitySchemes:
+    ApiKeyAuth: # Пример схемы аутентификации
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+paths:
+  # Эндпоинты для интеграции с Альта
+  /alta/ptd/export:
+    post:
+      summary: Запрос на формирование XML для ПТД
+      description: |
+        AmoCRM (или виджет в AmoCRM) отправляет данные для генерации XML файла
+        для пассажирской таможенной декларации. Сервис генерирует XML и возвращает его.
+      tags:
+        - Альта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PtdExportRequest'
+      responses:
+        '200':
+          description: XML файл успешно сформирован.
+          content:
+            application/xml:
+              schema:
+                type: string # Здесь будет сам XML
+        '400':
+          description: Некорректный запрос (например, отсутствуют обязательные поля).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /alta/ptd/status-webhook:
+    post:
+      summary: Webhook для уведомлений о статусах ПТД от Альта
+      description: Альта отправляет уведомления об изменении статуса ПТД.
+      tags:
+        - Альта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PtdStatusNotification'
+      responses:
+        '200':
+          description: Уведомление успешно принято и обработано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /alta/transit-declaration/status-webhook:
+    post:
+      summary: Webhook для уведомлений о статусах транзитных ДТ от Альта
+      description: Альта отправляет уведомления о регистрации транзитной ДТ.
+      tags:
+        - Альта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitDeclarationStatusNotification'
+      responses:
+        '200':
+          description: Уведомление успешно принято и обработано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Эндпоинты для интеграции с ВЭД-склад
+  /ved-sklad/svh-release-webhook:
+    post:
+      summary: Webhook для уведомлений о выдаче товаров с СВХ от ВЭД-склада
+      description: ВЭД-склад отправляет уведомление о возможности выдачи товаров.
+      tags:
+        - ВЭД-склад
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SvhReleaseNotification'
+      responses:
+        '200':
+          description: Уведомление успешно принято и обработано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ved-sklad/lab-documents-webhook:
+    post:
+      summary: Webhook для документов из лаборатории
+      description: PHP скрипт отправляет информацию о документах (ЭПТС, СБКТС) из лаборатории.
+      tags:
+        - ВЭД-склад
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabDocumentsNotification'
+      responses:
+        '200':
+          description: Документы успешно приняты и обработаны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Эндпоинты для интеграции с 1С
+  # Эти эндпоинты вызываются AmoCRM (или триггером из AmoCRM)
+  /1c/client-data:
+    post:
+      summary: Передача данных клиента из AmoCRM в 1С
+      description: |
+        При срабатывании триггера в AmoCRM (например, смена стадии на "Договор"),
+        AmoCRM отправляет данные клиента на этот эндпоинт для создания/обновления контрагента в 1С.
+      tags:
+        - 1С
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientDataFor1C'
+      responses:
+        '200':
+          description: Данные клиента успешно приняты для обработки в 1С.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /1c/service-data-for-invoice:
+    post:
+      summary: Передача данных по услугам из AmoCRM для формирования счета в 1С
+      description: |
+        При срабатывании триггера в AmoCRM, AmoCRM отправляет данные по услугам
+        для формирования счета в 1С.
+      tags:
+        - 1С
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceDataFor1CInvoice'
+      responses:
+        '200':
+          description: Данные по услугам успешно приняты для формирования счета в 1С.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /1c/invoice-payment-webhook:
+    post:
+      summary: Webhook для уведомлений об оплате счетов от 1С
+      description: 1С отправляет уведомление об оплате счета.
+      tags:
+        - 1С
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoicePaymentNotification'
+      responses:
+        '200':
+          description: Уведомление об оплате успешно принято и обработано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Некорректный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+# security: # Раскомментировать и настроить, если требуется аутентификация
+#   - ApiKeyAuth: []

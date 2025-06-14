@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Документация API Интеграционного Сервиса AmoCRM</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2, h3, h4 { color: #333; }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
+        h2 { background-color: #e0e0e0; padding: 10px; margin-top: 30px; border-left: 5px solid #555; }
+        h3 { background-color: #f0f0f0; padding: 8px; margin-top: 20px; border-left: 3px solid #777; }
+        h4 { margin-top: 15px; color: #444; }
+        .endpoint { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; background-color: #fff; border-radius: 5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        .method { font-weight: bold; padding: 5px 10px; border-radius: 3px; color: white; display: inline-block; margin-right: 10px; }
+        .post { background-color: #4CAF50; }
+        .get { background-color: #2196F3; }
+        .put { background-color: #ff9800; }
+        .delete { background-color: #f44336; }
+        .path { font-family: monospace; background-color: #eee; padding: 2px 5px; border-radius: 3px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        pre { background-color: #272822; color: #f8f8f2; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        code { font-family: monospace; background-color: #eee; padding: 2px 4px; border-radius: 3px;}
+        .description { margin-top: 5px; margin-bottom: 10px; font-style: italic; color: #555;}
+        .required { color: red; font-weight: bold; }
+        .tag-section { margin-bottom: 30px; }
+        .schema-details { border: 1px solid #ddd; padding: 10px; margin-top:10px; background-color: #f9f9f9;}
+    </style>
+</head>
+<body>
+    <h1>Документация API Интеграционного Сервиса AmoCRM</h1>
+
+    <div id="api-info">
+        <h2>Общая информация</h2>
+        <p><strong>Версия:</strong> 1.0.0</p>
+        <p><strong>Описание:</strong></p>
+        <pre>API для интеграции AmoCRM с внешними системами: Альта, ВЭД-склад, 1С.
+Сервис будет выступать в роли посредника, принимая и отправляя данные между AmoCRM и указанными системами.</pre>
+        <p><strong>Сервер:</strong> <code>http://localhost:8080/api/v1</code> (Локальный сервер разработки)</p>
+    </div>
+
+    <div id="paths">
+        <h2>Эндпоинты</h2>
+
+        <!-- Секция для тега "Альта" -->
+        <div class="tag-section">
+            <h3>Тег: Альта</h3>
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/alta/ptd/export</span></h4>
+                <p class="description">Запрос на формирование XML для ПТД.</p>
+                <p>AmoCRM (или виджет в AmoCRM) отправляет данные для генерации XML файла для пассажирской таможенной декларации. Сервис генерирует XML и возвращает его.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-PtdExportRequest">PtdExportRequest</a></p>
+                <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>lead_id</td><td>integer</td><td></td><td>ID сделки в AmoCRM</td><td class="required">Да</td></tr>
+                        <tr><td>client_surname</td><td>string</td><td></td><td>Фамилия клиента</td><td class="required">Да</td></tr>
+                        <tr><td>client_name</td><td>string</td><td></td><td>Имя клиента</td><td class="required">Да</td></tr>
+                        <tr><td>client_middlename</td><td>string</td><td></td><td>Отчество клиента (nullable)</td><td>Нет</td></tr>
+                        <tr><td>client_birth_date</td><td>string</td><td>date</td><td>Дата рождения клиента</td><td class="required">Да</td></tr>
+                        <tr><td>passport_series</td><td>string</td><td></td><td>Серия паспорта</td><td class="required">Да</td></tr>
+                        <tr><td>passport_number</td><td>string</td><td></td><td>Номер паспорта</td><td class="required">Да</td></tr>
+                        <tr><td>passport_issued_by</td><td>string</td><td></td><td>Кем выдан паспорт</td><td class="required">Да</td></tr>
+                        <tr><td>passport_issue_date</td><td>string</td><td>date</td><td>Дата выдачи паспорта</td><td class="required">Да</td></tr>
+                        <tr><td>registration_address</td><td>string</td><td></td><td>Адрес регистрации</td><td class="required">Да</td></tr>
+                        <tr><td>inn</td><td>string</td><td></td><td>ИНН (nullable)</td><td>Нет</td></tr>
+                        <tr><td>car_brand</td><td>string</td><td></td><td>Марка автомобиля</td><td class="required">Да</td></tr>
+                        <tr><td>car_model</td><td>string</td><td></td><td>Модель автомобиля</td><td class="required">Да</td></tr>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                        <tr><td>body_number</td><td>string</td><td></td><td>Номер кузова</td><td class="required">Да</td></tr>
+                        <tr><td>contract_number</td><td>string</td><td></td><td>Номер договора</td><td class="required">Да</td></tr>
+                        <tr><td>contract_date</td><td>string</td><td>date</td><td>Дата договора</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>XML файл успешно сформирован.</td><td><code>string</code> (XML)</td></tr>
+                        <tr><td>400</td><td>Некорректный запрос (например, отсутствуют обязательные поля).</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/alta/ptd/status-webhook</span></h4>
+                <p class="description">Webhook для уведомлений о статусах ПТД от Альта.</p>
+                <p>Альта отправляет уведомления об изменении статуса ПТД.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-PtdStatusNotification">PtdStatusNotification</a></p>
+                 <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Enum</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>declaration_number</td><td>string</td><td></td><td>Номер декларации</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>status_datetime</td><td>string</td><td>date-time</td><td>Дата и время статуса</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>status</td><td>string</td><td></td><td>Статус</td><td>["registered", "released", "rejected"]</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Уведомление успешно принято и обработано.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/alta/transit-declaration/status-webhook</span></h4>
+                <p class="description">Webhook для уведомлений о статусах транзитных ДТ от Альта.</p>
+                <p>Альта отправляет уведомления о регистрации транзитной ДТ.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-TransitDeclarationStatusNotification">TransitDeclarationStatusNotification</a></p>
+                <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                        <tr><td>declaration_number</td><td>string</td><td></td><td>Номер декларации</td><td class="required">Да</td></tr>
+                        <tr><td>registration_datetime</td><td>string</td><td>date-time</td><td>Дата и время регистрации</td><td class="required">Да</td></tr>
+                        <tr><td>persons</td><td>array (string)</td><td></td><td>Список ФИО, привязанных к ТД</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Уведомление успешно принято и обработано.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Секция для тега "ВЭД-склад" -->
+        <div class="tag-section">
+            <h3>Тег: ВЭД-склад</h3>
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/ved-sklad/svh-release-webhook</span></h4>
+                <p class="description">Webhook для уведомлений о выдаче товаров с СВХ от ВЭД-склада.</p>
+                <p>ВЭД-склад отправляет уведомление о возможности выдачи товаров.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-SvhReleaseNotification">SvhReleaseNotification</a></p>
+                <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                        <tr><td>notification_datetime</td><td>string</td><td>date-time</td><td>Дата Уведомления о принятии товара на СВХ</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Уведомление успешно принято и обработано.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/ved-sklad/lab-documents-webhook</span></h4>
+                <p class="description">Webhook для документов из лаборатории.</p>
+                <p>PHP скрипт отправляет информацию о документах (ЭПТС, СБКТС) из лаборатории.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-LabDocumentsNotification">LabDocumentsNotification</a></p>
+                <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                        <tr><td>epts_document_url</td><td>string</td><td>url</td><td>URL к загруженному ЭПТС документу (PDF)</td><td class="required">Да</td></tr>
+                        <tr><td>sbkts_document_url</td><td>string</td><td>url</td><td>URL к загруженному СБКТС документу (PDF)</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Документы успешно приняты и обработаны.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Секция для тега "1С" -->
+        <div class="tag-section">
+            <h3>Тег: 1С</h3>
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/1c/client-data</span></h4>
+                <p class="description">Передача данных клиента из AmoCRM в 1С.</p>
+                <p>При срабатывании триггера в AmoCRM (например, смена стадии на "Договор"), AmoCRM отправляет данные клиента на этот эндпоинт для создания/обновления контрагента в 1С.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-ClientDataFor1C">ClientDataFor1C</a></p>
+                <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Enum</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>lead_id</td><td>integer</td><td></td><td>ID сделки в AmoCRM</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>client_type</td><td>string</td><td></td><td>Вид клиента</td><td>["individual", "legal_entity"]</td><td class="required">Да</td></tr>
+                        <tr><td>full_name</td><td>string</td><td></td><td>Полное имя</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>mobile_phone</td><td>string</td><td></td><td>Мобильный телефон (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>passport_series</td><td>string</td><td></td><td>Серия паспорта (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>passport_number</td><td>string</td><td></td><td>Номер паспорта (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>passport_issued_by</td><td>string</td><td></td><td>Кем выдан паспорт (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>passport_issue_date</td><td>string</td><td>date</td><td>Дата выдачи паспорта (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>passport_department_code</td><td>string</td><td></td><td>Код подразделения (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>registration_address</td><td>string</td><td></td><td>Адрес регистрации</td><td></td><td class="required">Да</td></tr>
+                        <tr><td>inn</td><td>string</td><td></td><td>ИНН (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>snils</td><td>string</td><td></td><td>СНИЛС (nullable)</td><td></td><td>Нет</td></tr>
+                        <tr><td>contract_number</td><td>string</td><td></td><td>Номер договора (nullable)</td><td></td><td>Нет</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Данные клиента успешно приняты для обработки в 1С.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/1c/service-data-for-invoice</span></h4>
+                <p class="description">Передача данных по услугам из AmoCRM для формирования счета в 1С.</p>
+                <p>При срабатывании триггера в AmoCRM, AmoCRM отправляет данные по услугам для формирования счета в 1С.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-ServiceDataFor1CInvoice">ServiceDataFor1CInvoice</a></p>
+                 <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>lead_id</td><td>integer</td><td>ID сделки в AmoCRM</td><td class="required">Да</td></tr>
+                        <tr><td>vin</td><td>string</td><td>VIN</td><td class="required">Да</td></tr>
+                        <tr><td>services</td><td>array (object)</td><td>Список услуг. Каждая услуга: {name: string, cost: number (float)}</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Данные по услугам успешно приняты для формирования счета в 1С.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="endpoint">
+                <h4><span class="method post">POST</span> <span class="path">/1c/invoice-payment-webhook</span></h4>
+                <p class="description">Webhook для уведомлений об оплате счетов от 1С.</p>
+                <p>1С отправляет уведомление об оплате счета.</p>
+                
+                <h5>Тело запроса (Request Body):</h5>
+                <p><strong>Schema:</strong> <a href="#schema-InvoicePaymentNotification">InvoicePaymentNotification</a></p>
+                <table>
+                    <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                    <tbody>
+                        <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                        <tr><td>invoice_number</td><td>string</td><td></td><td>Номер счета</td><td class="required">Да</td></tr>
+                        <tr><td>payment_datetime</td><td>string</td><td>date-time</td><td>Дата и время оплаты</td><td class="required">Да</td></tr>
+                        <tr><td>amount</td><td>number</td><td>float</td><td>Сумма оплаты</td><td class="required">Да</td></tr>
+                    </tbody>
+                </table>
+
+                <h5>Ответы (Responses):</h5>
+                <table>
+                    <thead><tr><th>Код</th><th>Описание</th><th>Schema</th></tr></thead>
+                    <tbody>
+                        <tr><td>200</td><td>Уведомление об оплате успешно принято и обработано.</td><td><a href="#schema-SuccessResponse">SuccessResponse</a></td></tr>
+                        <tr><td>400</td><td>Некорректный запрос.</td><td><a href="#schema-Error">Error</a></td></tr>
+                        <tr><td>500</td><td>Внутренняя ошибка сервера.</td><td><a href="#schema-Error">Error</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="components-schemas">
+        <h2>Схемы (Models)</h2>
+        
+        <div class="schema-details" id="schema-Error">
+            <h4>Error</h4>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>code</td><td>integer</td><td>int32</td><td>Код ошибки</td><td class="required">Да</td></tr>
+                    <tr><td>message</td><td>string</td><td></td><td>Сообщение об ошибке</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-SuccessResponse">
+            <h4>SuccessResponse</h4>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Пример</th><th>Описание</th></tr></thead>
+                <tbody>
+                    <tr><td>status</td><td>string</td><td>"success"</td><td>Статус операции</td></tr>
+                    <tr><td>message</td><td>string</td><td>"Операция выполнена успешно"</td><td>Сообщение об успехе</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-PtdExportRequest">
+            <h4>PtdExportRequest</h4>
+            <p class="description">Данные для формирования XML для ПТД из AmoCRM.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>lead_id</td><td>integer</td><td></td><td>ID сделки в AmoCRM</td><td class="required">Да</td></tr>
+                    <tr><td>client_surname</td><td>string</td><td></td><td>Фамилия клиента</td><td class="required">Да</td></tr>
+                    <tr><td>client_name</td><td>string</td><td></td><td>Имя клиента</td><td class="required">Да</td></tr>
+                    <tr><td>client_middlename</td><td>string</td><td></td><td>Отчество клиента (nullable)</td><td>Нет</td></tr>
+                    <tr><td>client_birth_date</td><td>string</td><td>date</td><td>Дата рождения клиента</td><td class="required">Да</td></tr>
+                    <tr><td>passport_series</td><td>string</td><td></td><td>Серия паспорта</td><td class="required">Да</td></tr>
+                    <tr><td>passport_number</td><td>string</td><td></td><td>Номер паспорта</td><td class="required">Да</td></tr>
+                    <tr><td>passport_issued_by</td><td>string</td><td></td><td>Кем выдан паспорт</td><td class="required">Да</td></tr>
+                    <tr><td>passport_issue_date</td><td>string</td><td>date</td><td>Дата выдачи паспорта</td><td class="required">Да</td></tr>
+                    <tr><td>registration_address</td><td>string</td><td></td><td>Адрес регистрации</td><td class="required">Да</td></tr>
+                    <tr><td>inn</td><td>string</td><td></td><td>ИНН (nullable)</td><td>Нет</td></tr>
+                    <tr><td>car_brand</td><td>string</td><td></td><td>Марка автомобиля</td><td class="required">Да</td></tr>
+                    <tr><td>car_model</td><td>string</td><td></td><td>Модель автомобиля</td><td class="required">Да</td></tr>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                    <tr><td>body_number</td><td>string</td><td></td><td>Номер кузова</td><td class="required">Да</td></tr>
+                    <tr><td>contract_number</td><td>string</td><td></td><td>Номер договора</td><td class="required">Да</td></tr>
+                    <tr><td>contract_date</td><td>string</td><td>date</td><td>Дата договора</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-PtdStatusNotification">
+            <h4>PtdStatusNotification</h4>
+            <p class="description">Уведомление о статусе ПТД от Альта.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Enum</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>declaration_number</td><td>string</td><td></td><td>Номер декларации</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>status_datetime</td><td>string</td><td>date-time</td><td>Дата и время статуса</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>status</td><td>string</td><td></td><td>Статус</td><td>["registered", "released", "rejected"]</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-TransitDeclarationStatusNotification">
+            <h4>TransitDeclarationStatusNotification</h4>
+            <p class="description">Уведомление о статусе транзитной ДТ от Альта.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                    <tr><td>declaration_number</td><td>string</td><td></td><td>Номер декларации</td><td class="required">Да</td></tr>
+                    <tr><td>registration_datetime</td><td>string</td><td>date-time</td><td>Дата и время регистрации</td><td class="required">Да</td></tr>
+                    <tr><td>persons</td><td>array</td><td></td><td>Список ФИО, привязанных к ТД (items: string)</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-SvhReleaseNotification">
+            <h4>SvhReleaseNotification</h4>
+            <p class="description">Уведомление о принятии решения о выдаче товаров с СВХ от ВЭД-склада.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                    <tr><td>notification_datetime</td><td>string</td><td>date-time</td><td>Дата Уведомления о принятии товара на СВХ</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-LabDocumentsNotification">
+            <h4>LabDocumentsNotification</h4>
+            <p class="description">Уведомление с документами из лаборатории.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                    <tr><td>epts_document_url</td><td>string</td><td>url</td><td>URL к загруженному ЭПТС документу (PDF)</td><td class="required">Да</td></tr>
+                    <tr><td>sbkts_document_url</td><td>string</td><td>url</td><td>URL к загруженному СБКТС документу (PDF)</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-ClientDataFor1C">
+            <h4>ClientDataFor1C</h4>
+            <p class="description">Данные клиента из AmoCRM для создания контрагента в 1С.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Enum</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>lead_id</td><td>integer</td><td></td><td>ID сделки в AmoCRM</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>client_type</td><td>string</td><td></td><td>Вид клиента</td><td>["individual", "legal_entity"]</td><td class="required">Да</td></tr>
+                    <tr><td>full_name</td><td>string</td><td></td><td>Полное имя</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>mobile_phone</td><td>string</td><td></td><td>Мобильный телефон (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>passport_series</td><td>string</td><td></td><td>Серия паспорта (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>passport_number</td><td>string</td><td></td><td>Номер паспорта (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>passport_issued_by</td><td>string</td><td></td><td>Кем выдан паспорт (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>passport_issue_date</td><td>string</td><td>date</td><td>Дата выдачи паспорта (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>passport_department_code</td><td>string</td><td></td><td>Код подразделения (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>registration_address</td><td>string</td><td></td><td>Адрес регистрации</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>inn</td><td>string</td><td></td><td>ИНН (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>snils</td><td>string</td><td></td><td>СНИЛС (nullable)</td><td></td><td>Нет</td></tr>
+                    <tr><td>contract_number</td><td>string</td><td></td><td>Номер договора (nullable)</td><td></td><td>Нет</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-ServiceDataFor1CInvoice">
+            <h4>ServiceDataFor1CInvoice</h4>
+            <p class="description">Данные по услугам из AmoCRM для формирования счета в 1С.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>lead_id</td><td>integer</td><td>ID сделки в AmoCRM</td><td class="required">Да</td></tr>
+                    <tr><td>vin</td><td>string</td><td>VIN</td><td class="required">Да</td></tr>
+                    <tr><td>services</td><td>array</td><td>Список услуг. Каждая услуга: {name: string, cost: number (float)}</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+            <p>Структура элемента массива <code>services</code>:</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>name</td><td>string</td><td></td><td class="required">Да</td></tr>
+                    <tr><td>cost</td><td>number</td><td>float</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="schema-details" id="schema-InvoicePaymentNotification">
+            <h4>InvoicePaymentNotification</h4>
+            <p class="description">Уведомление об оплате счета из 1С.</p>
+            <table>
+                <thead><tr><th>Поле</th><th>Тип</th><th>Формат</th><th>Описание</th><th>Обязательное</th></tr></thead>
+                <tbody>
+                    <tr><td>vin</td><td>string</td><td></td><td>VIN</td><td class="required">Да</td></tr>
+                    <tr><td>invoice_number</td><td>string</td><td></td><td>Номер счета</td><td class="required">Да</td></tr>
+                    <tr><td>payment_datetime</td><td>string</td><td>date-time</td><td>Дата и время оплаты</td><td class="required">Да</td></tr>
+                    <tr><td>amount</td><td>number</td><td>float</td><td>Сумма оплаты</td><td class="required">Да</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="developer-notes">
+        <h2>Пояснения для разработчика</h2>
+        <p>При реализации методов данного API следует обратить внимание на следующие моменты:</p>
+        <ul>
+            <li><strong>Валидация входящих данных:</strong> Всегда проверяйте входящие данные на соответствие схемам, указанным в документации. Обрабатывайте случаи отсутствия обязательных полей или несоответствия типов данных. Возвращайте ошибку <code>400 Bad Request</code> с информативным сообщением.</li>
+            <li><strong>Обработка ошибок:</strong> Предусмотрите обработку возможных ошибок на стороне сервера (например, недоступность внешних систем, ошибки базы данных) и возвращайте ошибку <code>500 Internal Server Error</code>.</li>
+            <li><strong>Аутентификация и Авторизация:</strong> Хотя в текущей спецификации <code>securitySchemes</code> закомментирован, для производственной среды необходимо реализовать надежный механизм аутентификации (например, по API-ключу в заголовке <code>X-API-KEY</code>) и авторизации.</li>
+            <li><strong>Логирование:</strong> Ведите подробное логирование запросов, ответов и возникающих ошибок. Это поможет в отладке и мониторинге работы сервиса.</li>
+            <li><strong>Асинхронная обработка:</strong> Некоторые операции, особенно связанные с взаимодействием с внешними системами (Альта, 1С), могут быть длительными. Рассмотрите возможность использования асинхронной обработки для таких операций, чтобы не блокировать вызывающую систему. Webhook'и уже предполагают асинхронное взаимодействие.</li>
+            <li><strong>Формирование XML для ПТД (<code>/alta/ptd/export</code>):</strong> Этот эндпоинт должен генерировать XML-файл на основе полученных JSON-данных. Убедитесь, что структура XML соответствует требованиям системы "Альта".</li>
+            <li><strong>Обработка Webhook'ов:</strong>
+                <ul>
+                    <li>Эндпоинты, принимающие webhook'и (например, <code>/alta/ptd/status-webhook</code>, <code>/ved-sklad/svh-release-webhook</code>), должны быстро отвечать статусом <code>200 OK</code>, подтверждая получение данных. Основную логику обработки уведомления (например, обновление данных в AmoCRM) следует выполнять асинхронно, чтобы не задерживать систему-отправителя.</li>
+                    <li>Обеспечьте безопасность webhook-эндпоинтов, например, путем проверки IP-адреса отправителя или использования секретного ключа в запросе.</li>
+                </ul>
+            </li>
+            <li><strong>Интеграция с AmoCRM:</strong>
+                <ul>
+                    <li>При получении данных от внешних систем (через webhook'и), сервис должен будет взаимодействовать с API AmoCRM для обновления информации в сделках, контактах или добавления примечаний.</li>
+                    <li>При отправке данных в 1С (<code>/1c/client-data</code>, <code>/1c/service-data-for-invoice</code>), эти запросы, вероятно, будут инициироваться триггерами или виджетами в AmoCRM. Сервис должен принять эти данные и передать их в 1С.</li>
+                </ul>
+            </li>
+            <li><strong>Работа с файлами (<code>/ved-sklad/lab-documents-webhook</code>):</strong> Эндпоинт получает URL к документам. Предполагается, что некий PHP скрипт уже загрузил эти файлы. Вашему сервису, возможно, потребуется скачать эти файлы по URL для дальнейшей обработки или передачи в AmoCRM.</li>
+            <li><strong>Идемпотентность:</strong> По возможности, сделайте операции идемпотентными, особенно для webhook'ов. Это означает, что повторное получение одного и того же уведомления не должно приводить к дублированию данных или некорректным изменениям.</li>
+            <li><strong>Конфигурация:</strong> Вынесите URL-адреса внешних систем, API-ключи и другие параметры конфигурации в отдельные конфигурационные файлы или переменные окружения.</li>
+        </ul>
+        <p>Данный сервис выступает в роли посредника, поэтому ключевыми аспектами его работы являются надежная передача данных, корректное преобразование форматов (например, JSON в XML) и своевременное обновление информации в интегрируемых системах.</p>
+    </div>
+
+</body>
+</html>
